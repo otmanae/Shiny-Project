@@ -2,79 +2,7 @@ library(shiny)
 library(shinydashboard)
 
 library(dplyr)
-source("functions.R")
-
-
-calcule_mensualite <- function(montant_emprunte, taux_annuel, duree_mois) {
-  
-  #' Calcule le montant d'une mensualité en fonction du montant à emprunter, du taux d’intérêt et de la durée du prêt.
-  #'
-  #' @param montant_emprunte Montant à emprunter.
-  #' @param taux_annuel Taux d'intérêt annuel en pourcentage.
-  #' @param duree_mois Durée du prêt en mois.
-  #'
-  #' @return Le montant de la mensualité.
-  #'
-  #' @examples
-  #' calcule_mensualite(10000, 5, 36)
-
-  taux_mensuel <- taux_annuel / 12 / 100  # Calcul du taux d'intérêt mensuel en pourcentage
-  
-  # Calcul de la mensualité en utilisant la formule de calcul des mensualités d'un prêt
-  mensualite <- (montant_emprunte * taux_mensuel) / (1 - (1 + taux_mensuel)^-duree_mois)
-  montant_emp
-  
-  mensualite
-}
-
-
-
-tableau_amortissement <- function(montant_emprunte, taux_annuel, duree_mois, taux_assurance) {
-  
-  #' Génère un tableau d'amortissement pour un prêt en fonction du montant emprunté, du taux d'intérêt, de la durée du prêt et du montant de l'assurance.
-  #'
-  #' @param montant_emprunte Montant emprunté.
-  #' @param taux_annuel Taux d'intérêt annuel en pourcentage.
-  #' @param duree_mois Durée du prêt en mois.
-  #' @param assurance taux de l'assurance mensuelle.
-  #'
-  #' @return Un tableau décrivant l'amortissement du prêt mois par mois.
-  #'
-  #' @examples
-  #' tableau_amortissement(10000, 5, 36, 20)
-  
-  mensualite <- calcule_mensualite(montant_emprunte, taux_annuel, duree_mois)  # Calcul de la mensualité
-  mensualite <- round(mensualite,2)
-  capital_restant <- montant_emprunte
-  amortissement <- data.frame(Numéro = numeric(),
-                              Intérêts = numeric(),
-                              Principal = numeric(),
-                              Assurance = numeric(),
-                              Mensualité = numeric(),
-                              `Capital restant dû` = numeric(),
-                              stringsAsFactors = FALSE)
-  
-  # Calcul du montant de l'assurance 
-  
-  assurance <- taux_assurance * duree_mois/12 * montant_emprunte
-  taux_mensuel <- taux_annuel /12 /100
-  
-  
-  # Ajouter du code pour la dernière mensualité 
-  
-  for (mois in 1:duree_mois) {
-    interets <- capital_restant * taux_mensuel  # Calcul des intérêts pour ce mois
-    principal <- mensualite - interets - assurance  # Calcul du montant du principal pour ce mois
-    capital_restant <- capital_restant - principal  # Calcul du capital restant après paiement du principal
-    
-    ligne <- c(mois, interets, principal, assurance, mensualite, capital_restant)
-    amortissement <- rbind(amortissement, ligne)
-  }
-  
-  colnames(amortissement) <- c("Numéro", "Intérêts", "Principal", "Assurance", "Mensualité", "Capital restant dû")
-  amortissement
-}
-
+source("function1.R")
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
@@ -97,7 +25,7 @@ ui <- dashboardPage(
               fluidRow(
                 column(6, numericInput("duree_annees", "Durée du crédit (années) :", value = 20)),
                 column(6, numericInput("taux_interet", "Taux d'intérêt (%) :", value = 5)),
-                column(6, numericInput("taux_assurance", "Taux d'assurance (%) :", value = 0)),
+                column(6, numericInput("taux_assurance", "Taux d'assurance (%) :", value = 0.2)),
                 column(6, numericInput("montant_projet", "Montant du projet :", value = 100000)),
                 column(6, numericInput("apport_personnel", "Montant de l'apport personnel :", value = 0)),
                 column(6, numericInput("revenu_emprunteur1", "Revenu de l'emprunteur 1 :", value = 3000)),
@@ -105,12 +33,6 @@ ui <- dashboardPage(
                 column(6, numericInput("frais_dossier", "Frais de dossier et autres frais bancaires :", value = 1000)),
                 
                 actionButton("calculer", "Calculer")  # Bouton pour lancer les calculs
-              ),
-              box( 
-                width = 12, 
-                title = "Résultats",
-                # Outputs pour les résultats
-                verbatimTextOutput("mensualites")
               ),
               box(
                 width = 12,
@@ -129,7 +51,7 @@ ui <- dashboardPage(
                 column(6, numericInput("taux_assurance_emprunt", "Taux d'assurance (%) :", value = 0)),
                 column(6, numericInput("frais_dossier_emprunt", "Frais de dossier et autres frais bancaires :", value = 1000)),
                 
-                actionButton("calculer_empunt", "Calculer"),  # Bouton pour lancer les calculs
+                actionButton("calculer_emprunt", "Calculer"),  # Bouton pour lancer les calculs
                 verbatimTextOutput("capacite_emprunt")
               )
       )
@@ -144,18 +66,14 @@ server <- function(input, output) {
     duree_mois <- input$duree_annees * 12
     montant_emprunte <- input$montant_projet - input$apport_personnel
     
-    output$mensualites <- renderPrint({
-      calcul_mensualite(montant_emprunte, input$taux_interet, duree_mois)
-    })
-    
     output$amortissement <- renderDataTable({
-      tableau_amortissement(montant_emprunte, input$taux_interet, duree_mois,
-                            input$taux_assurance, taux_assurance)
+      tableau_amortissement(montant_emprunte, input$apport_personnel_emprunt, input$taux_interet, duree_mois,
+                            input$taux_assurance,input$frais_dossier_emprunt)
     })
     
     
   })
-  observeEvent(input$calculer_empunt, {
+  observeEvent(input$calculer_emprunt, {
     output$capacite_emprunt <- renderPrint({
       calcul_capacite_emprunt(12*input$duree_annees_emprunt,
                               input$revenu_emprunteur1_emprunt+input$revenu_emprunteur2_emprunt,
