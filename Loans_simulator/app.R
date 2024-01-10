@@ -14,7 +14,7 @@ calcule_mensualite <- function(montant_emprunte, taux_annuel, duree_mois) {
   #'
   #' @examples
   #' calcule_mensualite(10000, 5, 36)
-
+  
   taux_mensuel <- taux_annuel / 12 / 100  # Calcul du taux d'intérêt mensuel en pourcentage
   
   # Calcul de la mensualité en utilisant la formule de calcul des mensualités d'un prêt
@@ -59,6 +59,15 @@ tableau_amortissement <- function(montant_emprunte, taux_annuel, duree_mois, tau
   for (mois in 1:duree_mois) {
     interets <- capital_restant * taux_mensuel  # Calcul des intérêts pour ce mois
     principal <- mensualite - interets - assurance  # Calcul du montant du principal pour ce mois
+    
+    # Gérer le dernier mois
+    if (mois == duree_mois) {
+      mensualite <- capital_restant + interets + assurance
+      principal <- capital_restant
+      # la mensualité est exactement égale au capital restant dû
+      mensualite <- principal + interets + assurance
+    }
+    
     capital_restant <- capital_restant - principal  # Calcul du capital restant après paiement du principal
     
     ligne <- c(mois, interets, principal, assurance, mensualite, capital_restant)
