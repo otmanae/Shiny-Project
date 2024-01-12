@@ -83,7 +83,6 @@ tableau_amortissement <- function(montant_emprunte,
         amortissement <- rbind(amortissement, ligne)}
   }
   mensualite_moyenne_globale<<-total_paye/duree_mois
-  debug(mensualite_moyenne_globale,"mensualite_moyenne")
   colnames(amortissement) <- c("Numéro", "Intérêts", "Principal", "Assurance", "Mensualité", "Capital restant dû")
   amortissement
 }
