@@ -48,7 +48,7 @@ tableau_amortissement <- function(montant_emprunte,
   
   capital_restant <- montant_emprunte-apport_personnel_emprunt+frais_dossier_emprunt
   taux_mensuel<- taux_annuel/12/100
-  
+  total_paye<-0
   amortissement <- data.frame(Numéro = numeric(),
                               Intérêts = numeric(),
                               Principal = numeric(),
@@ -66,7 +66,7 @@ tableau_amortissement <- function(montant_emprunte,
       principal <- mensualite - interets - assurance_mensuelle  # Calcul du montant du principal pour ce mois
       
       capital_restant <- capital_restant - principal  # Calcul du capital restant après paiement du principal
-      
+      total_paye<-total_paye+mensualite
       ligne <- c(mois, round(interets,2), round(principal,2), round(assurance_mensuelle,2), round(mensualite,2), round(capital_restant,2))
       amortissement <- rbind(amortissement, ligne)
       }
@@ -77,12 +77,13 @@ tableau_amortissement <- function(montant_emprunte,
         
         mensualite<-calcul_mensualite(capital_restant,taux_annuel,duree_mois-mois)
         principal <- mensualite - interets - assurance_mensuelle  # Calcul du montant du principal pour ce mois
-        
+        total_paye<-total_paye+mensualite
         capital_restant <- capital_restant - principal  # Calcul du capital restant après paiement du principal
         ligne <- c(mois, round(interets,2), round(principal,2), round(assurance_mensuelle,2), round(mensualite,2), round(capital_restant,2))
         amortissement <- rbind(amortissement, ligne)}
   }
-  
+  mensualite_moyenne_globale<<-total_paye/duree_mois
+  debug(mensualite_moyenne_globale,"mensualite_moyenne")
   colnames(amortissement) <- c("Numéro", "Intérêts", "Principal", "Assurance", "Mensualité", "Capital restant dû")
   amortissement
 }
@@ -106,11 +107,13 @@ tableau_amortissement <- function(montant_emprunte,
 
 calcul_capacite_emprunt <- function(duree_mois, revenu_net, taux_endettement_max, apport_personnel_emprunt, taux_assurrance){
   
-  #df_taux_barometre <- data.frame(mois = 12*c(7,10,15,20,25), taux = c(0.032,0.034,0.0385,0.0405,0.042)/12)
-  #RL_taux_barometre <- lm(data = df_taux_barometre, formula = taux~mois)
-  #taux_mensuel <- predict(RL_taux_barometre,data.frame(mois = duree_mois))
+  df_taux_barometre <- data.frame(mois = 12*c(7,10,15,20,25), taux = c(0.032,0.034,0.0385,0.0405,0.042)/12)
+  RL_taux_barometre <- lm(data = df_taux_barometre, formula = taux~mois)
+  taux_mensuel <- predict(RL_taux_barometre,data.frame(mois = duree_mois))
   mensualite<- revenu_net*taux_endettement_max
   # Calcul de la montant_emprunte en utilisant la formule de calcul des montant_emprunte d'un prêt
   montant_emprunte <- mensualite * (1 - (1 + taux_mensuel)^-duree_mois) / taux_mensuel + apport_personnel_emprunt
   montant_emprunte
 }
+
+

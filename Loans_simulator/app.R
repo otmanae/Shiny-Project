@@ -1,7 +1,11 @@
 library(shiny)
 library(shinydashboard)
-
+library(shinydashboardPlus)
 library(dplyr)
+library(ggplot2)
+library(plotly)
+library(shinyjs)
+
 source("function1.R")
 
 # Define UI for application that draws a histogram
@@ -11,10 +15,9 @@ ui <- dashboardPage(
     
     ##mettre ici les inputs 
     sidebarMenu(
-      #premier onglet avec les résumés (cout du crédit, montant des mensualités,...)
-      menuItem("Résumé", tabName = "resume"), 
       ##tableau d'amortissement 
       menuItem("Tableau d'amortissement", tabName = "amortissement"),
+      menuItem("Résumé", tabName = "resume", icon = icon("info-circle", color = "green")),
       menuItem("Capacité d'emprunt", tabName = "capacite_emprunt_item")
     )
   ),
@@ -39,7 +42,8 @@ ui <- dashboardPage(
                 title = "Tableau d'amortissement",
                 dataTableOutput("amortissement")
               ),
-              downloadButton("download_amortissement", "Télécharger le tableau d'amortissement")
+              downloadButton("download_amortissement", "Télécharger le tableau d'amortissement"),
+              
       ), 
       tabItem("capacite_emprunt_item", 
               fluidRow(
@@ -54,32 +58,102 @@ ui <- dashboardPage(
                 actionButton("calculer_emprunt", "Calculer"),  # Bouton pour lancer les calculs
                 verbatimTextOutput("capacite_emprunt")
               )
-      )
+              
+      ),
+      tabItem("resume",
+              fluidRow(
+                column(12, h3("Résumé du Crédit Immobilier", style = "color: #333")),
+                box(
+                  width = 4,
+                  title = "Coût Total du Crédit",
+                  valueBoxOutput("cout_credit"),
+                  background = "yellow",  # Couleur de fond pour le coût total du crédit
+                  color = "black"  # Couleur du texte
+                ),
+                box(
+                  width = 4,
+                  title = "Coût Total de l'Assurance",
+                  valueBoxOutput("cout_assurance"),
+                  background = "blue",  # Couleur de fond pour le coût total de l'assurance
+                  color = "black"  # Couleur du texte
+                ),
+                box(
+                  width = 4,
+                  title = "Coût Total des Intérêts",
+                  valueBoxOutput("cout_interets"),
+                  background = "green",  # Couleur de fond pour le coût total des intérêts
+                  color = "black"  # Couleur du texte
+                ),
+                box(
+                  width = 4,
+                  title = "Mensualité fixe dûe",
+                  valueBoxOutput("Mensualite_fixe"),
+                  background = "green",  # Couleur de fond pour le coût total des intérêts
+                  color = "black"  # Couleur du texte
+                ),
+                box(
+                  width = 12,
+                  title = "Graphique des coûts totaux du crédit",
+                  plotlyOutput("couts_totals")
+                )
+              )
     )
   )##fin body
 )##fin app
+)
 
-
-
-server <- function(input, output) {
+server <- function(input, output, session) {
+  amort <- reactiveVal(NULL)
+  
   observeEvent(input$calculer, {
     duree_mois <- input$duree_annees * 12
     montant_emprunte <- input$montant_projet - input$apport_personnel
     
-    output$amortissement <- renderDataTable({
-      tableau_amortissement(montant_emprunte, input$apport_personnel_emprunt, input$taux_interet, duree_mois,
-                            input$taux_assurance,input$frais_dossier_emprunt)
-    })
+    amort_val <- tableau_amortissement(montant_emprunte, input$apport_personnel_emprunt, input$taux_interet, duree_mois,
+                                       input$taux_assurance, input$frais_dossier_emprunt)
+    amort(amort_val)
+    last_month <- nrow(amort_val$Mensualité)
     
     
   })
-  observeEvent(input$calculer_emprunt, {
-    output$capacite_emprunt <- renderPrint({
-      calcul_capacite_emprunt(12*input$duree_annees_emprunt,
-                              input$revenu_emprunteur1_emprunt+input$revenu_emprunteur2_emprunt,
-                              input$taux_endettement_max_emprunt/100, input$apport_personnel_emprunt,
-                              input$taux_assurance_emprunt)
-    })
+  
+  output$amortissement <- renderDataTable({
+    req(amort())
+  })
+  
+  output$couts_totals <- renderPlotly({
+    req(amort())
+    
+    frais_dossier_total <- input$frais_dossier_emprunt
+    cout_total_initial <- frais_dossier_total + input$apport_personnel_emprunt
+    
+    montant_emprunte_initial <- input$montant_projet - input$apport_personnel_emprunt
+    
+    Couts_Interets <- cumsum(amort()$Intérêts)
+    Couts_Assurances <- cumsum(amort()$Assurance)
+    Couts_Total <- cumsum(amort()$Mensualité) + cout_total_initial
+
+    output$cout_credit <- renderText({ paste(formatC(Couts_Total[length(Couts_Total)], digits = 2, format = "f"), "€") })
+    output$cout_interets <- renderText({ paste(formatC(Couts_Interets[length(Couts_Interets)], digits = 2, format = "f"), "€") })
+    output$cout_assurance <- renderText({ paste(formatC(Couts_Assurances[length(Couts_Assurances)], digits = 2, format = "f"), "€") })
+    output$mensualite_fixe <- renderText({ paste(formatC(mensualite_moyenne_globale, digits = 2, format = "f"), "€") })
+    
+    output$cout_assurance <- renderText({ paste(formatC(Couts_Assurances[length(Couts_Assurances)], digits = 2, format = "f"), "€") })
+    plot_ly(x = 1:length(Couts_Interets)) %>%
+      add_lines(y = Couts_Interets, name = "Intérêts", line = list(dash = 'dash')) %>%
+      add_lines(y = Couts_Assurances, name = "Assurances", line = list(dash = 'dash')) %>%
+      add_lines(y = Couts_Total, name = "Total") %>%
+      layout(title = "Évolution des coûts totaux du crédit",
+             xaxis = list(title = "Mois"),
+             yaxis = list(title = "Montant (en euros)"))
+  })
+  
+  
+  output$capacite_emprunt <- renderText({
+    calcul_capacite_emprunt(12 * input$duree_annees_emprunt,
+                            input$revenu_emprunteur1_emprunt + input$revenu_emprunteur2_emprunt,
+                            input$taux_endettement_max_emprunt / 100, input$apport_personnel_emprunt,
+                            input$taux_assurance_emprunt)
   })
 }
 
