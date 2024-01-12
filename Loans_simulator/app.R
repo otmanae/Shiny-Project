@@ -136,7 +136,7 @@ server <- function(input, output, session) {
     output$cout_credit <- renderText({ paste(formatC(Couts_Total[length(Couts_Total)], digits = 2, format = "f"), "€") })
     output$cout_interets <- renderText({ paste(formatC(Couts_Interets[length(Couts_Interets)], digits = 2, format = "f"), "€") })
     output$cout_assurance <- renderText({ paste(formatC(Couts_Assurances[length(Couts_Assurances)], digits = 2, format = "f"), "€") })
-    output$mensualite_fixe <- renderText({ paste(formatC(mensualite_moyenne_globale, digits = 2, format = "f"), "€") })
+    output$Mensualite_fixe <- renderText({ paste(formatC(mensualite_moyenne_globale, digits = 2, format = "f"), "€") })
     
     output$cout_assurance <- renderText({ paste(formatC(Couts_Assurances[length(Couts_Assurances)], digits = 2, format = "f"), "€") })
     plot_ly(x = 1:length(Couts_Interets)) %>%
