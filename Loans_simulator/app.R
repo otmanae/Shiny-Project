@@ -16,9 +16,9 @@ ui <- dashboardPage(
     ##mettre ici les inputs 
     sidebarMenu(
       ##tableau d'amortissement 
-      menuItem("Tableau d'amortissement", tabName = "amortissement"),
+      menuItem("Tableau d'amortissement",icon = icon("home"), tabName = "amortissement"),
       menuItem("Résumé", tabName = "resume", icon = icon("info-circle", color = "green")),
-      menuItem("Capacité d'emprunt", tabName = "capacite_emprunt_item")
+      menuItem("Capacité d'emprunt",icon = icon("search"), tabName = "capacite_emprunt_item")
     )
   ),
   dashboardBody(
@@ -33,9 +33,9 @@ ui <- dashboardPage(
                 column(6, numericInput("apport_personnel", "Montant de l'apport personnel :", value = 0)),
                 column(6, numericInput("revenu_emprunteur1", "Revenu de l'emprunteur 1 :", value = 3000)),
                 column(6, numericInput("revenu_emprunteur2", "Revenu de l'emprunteur 2 :", value = 0)),
-                column(6, numericInput("frais_dossier", "Frais de dossier et autres frais bancaires :", value = 1000)),
+                column(6, numericInput("frais_dossier", "Frais de dossier et autres frais bancaires :", value = 0)),
                 
-                actionButton("calculer", "Calculer")  # Bouton pour lancer les calculs
+                actionButton("calculer",icon = icon("calculator"), "Calculer")  # Bouton pour lancer les calculs
               ),
               box(
                 width = 12,
@@ -52,11 +52,17 @@ ui <- dashboardPage(
                 column(6, numericInput("revenu_emprunteur1_emprunt", "Revenu de l'emprunteur 1 :", value = 3000)),
                 column(6, numericInput("revenu_emprunteur2_emprunt", "Revenu de l'emprunteur 2 :", value = 0)),
                 column(6, numericInput("apport_personnel_emprunt", "Montant de l'apport personnel :", value = 0)),
-                column(6, numericInput("taux_assurance_emprunt", "Taux d'assurance (%) :", value = 0)),
                 column(6, numericInput("frais_dossier_emprunt", "Frais de dossier et autres frais bancaires :", value = 1000)),
                 
-                actionButton("calculer_emprunt", "Calculer"),  # Bouton pour lancer les calculs
-                verbatimTextOutput("capacite_emprunt")
+                
+                box(
+                  title = "Capacité d'emprunt",
+                  status = "primary",  
+                  solidHeader = TRUE,  
+                  collapsible = TRUE,  
+                  width = 12,  
+                  verbatimTextOutput("capacite_emprunt")  # Affichage du texte ici
+                )
               )
               
       ),
