@@ -73,28 +73,28 @@ ui <- dashboardPage(
                   width = 4,
                   title = "Coût Total du Crédit",
                   valueBoxOutput("cout_credit"),
-                  background = "yellow",  # Couleur de fond pour le coût total du crédit
+                  background = "green",  # Couleur de fond pour le coût total du crédit
                   color = "black"  # Couleur du texte
                 ),
                 box(
                   width = 4,
                   title = "Coût Total de l'Assurance",
                   valueBoxOutput("cout_assurance"),
-                  background = "blue",  # Couleur de fond pour le coût total de l'assurance
+                  background = "yellow",  # Couleur de fond pour le coût total de l'assurance
                   color = "black"  # Couleur du texte
                 ),
                 box(
                   width = 4,
                   title = "Coût Total des Intérêts",
                   valueBoxOutput("cout_interets"),
-                  background = "green",  # Couleur de fond pour le coût total des intérêts
+                  background = "blue",  # Couleur de fond pour le coût total des intérêts
                   color = "black"  # Couleur du texte
                 ),
                 box(
                   width = 4,
                   title = "Mensualité fixe dûe",
                   valueBoxOutput("Mensualite_fixe"),
-                  background = "green",  # Couleur de fond pour le coût total des intérêts
+                  background = "orange",  # Couleur de fond pour le coût total des intérêts
                   color = "black"  # Couleur du texte
                 ),
                 box(
